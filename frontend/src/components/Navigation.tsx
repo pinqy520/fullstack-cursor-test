@@ -1,26 +1,50 @@
 import React from 'react'
-import { Nav } from '@douyinfe/semi-ui'
-import { IconUser, IconUserGroup, IconKey, IconHome } from '@douyinfe/semi-icons'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Layout, Nav, Button, Avatar } from '@douyinfe/semi-ui'
+import { IconUser, IconUserGroup, IconKey, IconSetting } from '@douyinfe/semi-icons'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import type { OnSelectedData } from '@douyinfe/semi-ui/lib/es/navigation'
+
+const { Sider } = Layout
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate()
-  const location = useLocation()
+  const { user, logout } = useAuth()
 
-  const items = [
-    { itemKey: '/', text: 'Dashboard', icon: <IconHome /> },
-    { itemKey: '/users', text: 'Users', icon: <IconUser /> },
-    { itemKey: '/roles', text: 'Roles', icon: <IconUserGroup /> },
-    { itemKey: '/permissions', text: 'Permissions', icon: <IconKey /> },
-  ]
+  const handleSelect = (data: OnSelectedData) => {
+    navigate(`/${data.itemKey}`)
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
-    <Nav
-      items={items}
-      mode="horizontal"
-      onSelect={key => navigate(key.itemKey as string)}
-      selectedKeys={[location.pathname]}
-    />
+    <Sider style={{ height: '100vh' }}>
+      <Nav
+        style={{ height: '100%' }}
+        defaultSelectedKeys={['dashboard']}
+        items={[
+          { itemKey: 'dashboard', text: 'Dashboard', icon: <IconSetting /> },
+          { itemKey: 'users', text: 'Users', icon: <IconUser /> },
+          { itemKey: 'roles', text: 'Roles', icon: <IconUserGroup /> },
+          { itemKey: 'permissions', text: 'Permissions', icon: <IconKey /> },
+        ]}
+        onSelect={handleSelect}
+        header={{
+          logo: <Avatar color="orange" size="small">AD</Avatar>,
+          text: 'Admin Dashboard'
+        }}
+        footer={
+          user && (
+            <Button theme="borderless" style={{ width: '100%', marginTop: 12 }} onClick={handleLogout}>
+              Logout
+            </Button>
+          )
+        }
+      />
+    </Sider>
   )
 }
 

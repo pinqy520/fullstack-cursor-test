@@ -5,7 +5,9 @@ CREATE TABLE "User" (
     "password" TEXT NOT NULL,
     "name" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" DATETIME NOT NULL,
+    "resetToken" TEXT,
+    "resetTokenExpires" DATETIME
 );
 
 -- CreateTable

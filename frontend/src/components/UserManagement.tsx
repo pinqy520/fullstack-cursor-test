@@ -1,70 +1,129 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Modal, Form, Toast } from '@douyinfe/semi-ui'
+import { Table, Button, Modal, Form, Toast, Select } from '@douyinfe/semi-ui'
+import { API, User, RegistrationData, Role } from '../types/api'
 
-interface User {
-  id: number
-  email: string
-  name: string
+interface UserManagementProps {
+  api: API;
 }
 
-const UserManagement: React.FC = () => {
+const UserManagement: React.FC<UserManagementProps> = ({ api }) => {
   const [users, setUsers] = useState<User[]>([])
   const [visible, setVisible] = useState(false)
+  const [formApi, setFormApi] = useState<any>(null)
+  const [roles, setRoles] = useState<Role[]>([])
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [roleModalVisible, setRoleModalVisible] = useState(false)
 
   useEffect(() => {
     fetchUsers()
+    fetchRoles()
   }, [])
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users')
-      if (!response.ok) throw new Error('Failed to fetch users')
-      const data = await response.json()
-      setUsers(data)
+      const fetchedUsers = await api.getAllUsers()
+      setUsers(fetchedUsers)
     } catch (error) {
-      console.error('Error fetching users:', error)
-      Toast.error('Failed to load users')
+      Toast.error('Failed to fetch users')
     }
   }
 
-  const handleSubmit = async (values: { email: string; name: string }) => {
+  const fetchRoles = async () => {
     try {
-      const response = await fetch('/api/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, password: 'defaultPassword' }), // In a real app, you'd want to generate a random password or have the user set it
-      })
-      if (!response.ok) throw new Error('Failed to create user')
+      const fetchedRoles = await api.getAllRoles()
+      setRoles(fetchedRoles)
+    } catch (error) {
+      Toast.error('Failed to fetch roles')
+    }
+  }
+
+  const handleCreateUser = async (values: RegistrationData) => {
+    try {
+      await api.registerUser(values)
       Toast.success('User created successfully')
       setVisible(false)
+      formApi.reset()
       fetchUsers()
     } catch (error) {
-      console.error('Error creating user:', error)
       Toast.error('Failed to create user')
+    }
+  }
+
+  const handleAssignRole = async (values: { roleId: number }) => {
+    if (!selectedUser) return
+    try {
+      await api.assignRoleToUser(selectedUser.id, values.roleId)
+      Toast.success('Role assigned successfully')
+      setRoleModalVisible(false)
+      fetchUsers()
+    } catch (error) {
+      Toast.error('Failed to assign role')
     }
   }
 
   const columns = [
     { title: 'ID', dataIndex: 'id' },
-    { title: 'Email', dataIndex: 'email' },
     { title: 'Name', dataIndex: 'name' },
+    { title: 'Email', dataIndex: 'email' },
+    {
+      title: 'Actions',
+      dataIndex: 'actions',
+      render: (text: string, record: User) => (
+        <Button onClick={() => handleDeleteUser(record.id)}>Delete</Button>
+      ),
+    },
+    {
+      title: 'Roles',
+      dataIndex: 'roles',
+      render: (roles: Array<{ roleId: number }>, record: User) => (
+        <>
+          {roles.map(role => role.roleId).join(', ')}
+          <Button onClick={() => { setSelectedUser(record); setRoleModalVisible(true); }}>
+            Manage Roles
+          </Button>
+        </>
+      ),
+    },
   ]
 
+  const handleDeleteUser = async (id: number) => {
+    try {
+      await api.deleteUser(id)
+      Toast.success('User deleted successfully')
+      fetchUsers()
+    } catch (error) {
+      Toast.error('Failed to delete user')
+    }
+  }
+
   return (
-    <div style={{ padding: '20px' }}>
-      <Button onClick={() => setVisible(true)} style={{ marginBottom: '20px' }}>Add User</Button>
+    <div>
+      <Button onClick={() => setVisible(true)}>Create User</Button>
       <Table columns={columns} dataSource={users} />
       <Modal
-        title="Add User"
+        title="Create User"
         visible={visible}
-        onOk={() => {}}
+        onOk={() => formApi.submitForm()}
         onCancel={() => setVisible(false)}
-        footer={null}
       >
-        <Form onSubmit={handleSubmit}>
-          <Form.Input field="email" label="Email" rules={[{ required: true, type: 'email' }]} />
-          <Form.Input field="name" label="Name" rules={[{ required: true }]} />
-          <Button type="primary" htmlType="submit" style={{ marginTop: '20px' }}>Submit</Button>
+        <Form getFormApi={setFormApi} onSubmit={handleCreateUser}>
+          <Form.Input field="name" label="Name" />
+          <Form.Input field="email" label="Email" />
+          <Form.Input field="password" label="Password" type="password" />
+        </Form>
+      </Modal>
+      <Modal
+        title="Assign Role"
+        visible={roleModalVisible}
+        onOk={() => formApi.submitForm()}
+        onCancel={() => setRoleModalVisible(false)}
+      >
+        <Form getFormApi={setFormApi} onSubmit={handleAssignRole}>
+          <Form.Select field="roleId" label="Role" style={{ width: '100%' }}>
+            {roles.map(role => (
+              <Select.Option key={role.id} value={role.id}>{role.name}</Select.Option>
+            ))}
+          </Form.Select>
         </Form>
       </Modal>
     </div>

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Table, Button, Modal, Form, Toast } from '@douyinfe/semi-ui'
+import { API, Permission, PermissionCreationData } from '../types/api'
 
-interface Permission {
-  id: number
-  name: string
+interface PermissionManagementProps {
+  api: API
 }
 
-const PermissionManagement: React.FC = () => {
+const PermissionManagement: React.FC<PermissionManagementProps> = ({ api }) => {
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [visible, setVisible] = useState(false)
+  const [formApi, setFormApi] = useState<any>(null)
 
   useEffect(() => {
     fetchPermissions()
@@ -16,29 +17,23 @@ const PermissionManagement: React.FC = () => {
 
   const fetchPermissions = async () => {
     try {
-      const response = await fetch('/api/permissions')
-      if (!response.ok) throw new Error('Failed to fetch permissions')
-      const data = await response.json()
-      setPermissions(data)
+      const fetchedPermissions = await api.getAllPermissions()
+      setPermissions(fetchedPermissions)
     } catch (error) {
-      console.error('Error fetching permissions:', error)
-      Toast.error('Failed to load permissions')
+      console.error('Failed to fetch permissions:', error)
+      Toast.error('Failed to fetch permissions')
     }
   }
 
-  const handleSubmit = async (values: { name: string }) => {
+  const handleCreatePermission = async (values: PermissionCreationData) => {
     try {
-      const response = await fetch('/api/permissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      })
-      if (!response.ok) throw new Error('Failed to create permission')
+      await api.createPermission(values)
       Toast.success('Permission created successfully')
       setVisible(false)
+      formApi.reset()
       fetchPermissions()
     } catch (error) {
-      console.error('Error creating permission:', error)
+      console.error('Failed to create permission:', error)
       Toast.error('Failed to create permission')
     }
   }
@@ -46,22 +41,41 @@ const PermissionManagement: React.FC = () => {
   const columns = [
     { title: 'ID', dataIndex: 'id' },
     { title: 'Name', dataIndex: 'name' },
+    { title: 'Description', dataIndex: 'description' },
+    { title: 'Scope', dataIndex: 'scope' },
+    {
+      title: 'Actions',
+      dataIndex: 'actions',
+      render: (text: string, record: Permission) => (
+        <Button onClick={() => handleDeletePermission(record.id)}>Delete</Button>
+      ),
+    },
   ]
 
+  const handleDeletePermission = async (id: number) => {
+    try {
+      await api.deletePermission(id)
+      Toast.success('Permission deleted successfully')
+      fetchPermissions()
+    } catch (error) {
+      Toast.error('Failed to delete permission')
+    }
+  }
+
   return (
-    <div style={{ padding: '20px' }}>
-      <Button onClick={() => setVisible(true)} style={{ marginBottom: '20px' }}>Add Permission</Button>
+    <div>
+      <Button onClick={() => setVisible(true)}>Create Permission</Button>
       <Table columns={columns} dataSource={permissions} />
       <Modal
-        title="Add Permission"
+        title="Create Permission"
         visible={visible}
-        onOk={() => {}}
+        onOk={() => formApi.submitForm()}
         onCancel={() => setVisible(false)}
-        footer={null}
       >
-        <Form onSubmit={handleSubmit}>
-          <Form.Input field="name" label="Permission Name" rules={[{ required: true }]} />
-          <Button type="primary" htmlType="submit" style={{ marginTop: '20px' }}>Submit</Button>
+        <Form getFormApi={setFormApi} onSubmit={handleCreatePermission}>
+          <Form.Input field="name" label="Name" />
+          <Form.Input field="description" label="Description" />
+          <Form.Input field="scope" label="Scope" />
         </Form>
       </Modal>
     </div>
