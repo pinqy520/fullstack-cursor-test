@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Form, Button, Typography } from '@douyinfe/semi-ui'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import apiClient from '../api/client'
 
 const { Text } = Typography
 
@@ -13,9 +12,7 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     try {
-      const user = await apiClient.loginUser(values)
-      login(user)  // 使用 AuthContext 的 login 函数存储用户信息
-      console.log('Logged in user:', user)
+      await login(values.email, values.password)  // 使用 AuthContext 的 login 函数存储用户信息
       navigate('/dashboard')
     } catch (err) {
       setError('Login failed. Please check your credentials.')

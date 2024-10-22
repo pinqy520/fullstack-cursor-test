@@ -2,11 +2,11 @@
 export interface User {
   id: number;
   email: string;
-  name?: string;
+  name: string | null;
 }
 
 export interface UserWithRoles extends User {
-  roles: Array<{ roleId: number }>;
+  roles: Role[];
 }
 
 export interface LoginCredentials {
@@ -14,10 +14,15 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface LoginResponse {
+  user: User;
+  token: string;
+}
+
 export interface RegistrationData {
   email: string;
   password: string;
-  name?: string;
+  name: string;
 }
 
 export interface PasswordChangeData {
@@ -44,40 +49,28 @@ export interface ProfileUpdateData {
 export interface Role {
   id: number;
   name: string;
-  description?: string;
-  parentRoleId?: number;
-  parentRole?: Role;
-  childRoles?: Role[];
-  permissions: Permission[];
 }
 
 export interface RoleWithDetails extends Role {
   permissions: Permission[];
-  users: User[];
 }
 
 export interface RoleCreationData {
   name: string;
-  description?: string;
-  parentRoleId?: number;
 }
 
 // Permission related types
 export interface Permission {
   id: number;
   name: string;
-  description: string;
-  scope: string;
 }
 
 export interface PermissionWithRoles extends Permission {
-  roles: Array<{ roleId: number }>;
+  roles: Role[];
 }
 
 export interface PermissionCreationData {
   name: string;
-  description: string;
-  scope: string;
 }
 
 // API response types
@@ -89,7 +82,7 @@ export interface MessageResponse {
 export interface API {
   // User related functions
   registerUser: (data: RegistrationData) => Promise<User>;
-  loginUser: (credentials: LoginCredentials) => Promise<User>;
+  loginUser: (credentials: LoginCredentials) => Promise<LoginResponse>;
   logoutUser: () => Promise<MessageResponse>;
   changePassword: (data: PasswordChangeData) => Promise<MessageResponse>;
   requestPasswordReset: (

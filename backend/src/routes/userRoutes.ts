@@ -2,11 +2,13 @@ import { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
+import { UserService } from '../services/UserService';
 
 const prisma = new PrismaClient();
+const userService = new UserService();
 
 export async function userRoutes(fastify: FastifyInstance) {
-  fastify.post("/register", async (request, reply) => {
+  fastify.post("/register", { preHandler: (req, res, done) => done() }, async (request, reply) => {
     const { email, password, name } = request.body as any;
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
@@ -15,19 +17,14 @@ export async function userRoutes(fastify: FastifyInstance) {
     reply.send({ id: user.id, email: user.email, name: user.name });
   });
 
-  fastify.post("/login", async (request, reply) => {
+  fastify.post("/login", { preHandler: (req, res, done) => done() }, async (request, reply) => {
     const { email, password } = request.body as any;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+    const result = await userService.login(email, password);
+    if (result) {
+      reply.send({ user: result.user, token: result.token });
+    } else {
       reply.status(401).send({ error: "Invalid credentials" });
-      return;
     }
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      reply.status(401).send({ error: "Invalid credentials" });
-      return;
-    }
-    reply.send({ id: user.id, email: user.email, name: user.name });
   });
 
   fastify.post("/logout", async (request, reply) => {
