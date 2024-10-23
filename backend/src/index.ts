@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import routes from "./routes";
 import fastifyStatic from "@fastify/static";
 import path from "path";
-import { authMiddleware } from './middlewares/authMiddleware';
+import { authMiddleware } from "./middlewares/authMiddleware";
 
 const prisma = new PrismaClient();
 const fastify = Fastify({
@@ -30,18 +30,18 @@ fastify.setNotFoundHandler((request, reply) => {
 
 // 定义不需要身份验证的路由
 const publicRoutes = [
-  '/api/users/register',
-  '/api/users/login',
-  '/api/users/forgot-password',
-  '/api/users/reset-password'
+  "/api/users/register",
+  "/api/users/login",
+  "/api/users/forgot-password",
+  "/api/users/reset-password",
 ];
 
 // 注册全局中间件，但排除公共路由
-fastify.addHook('preHandler', (request, reply, done) => {
-  if (publicRoutes.includes(request.url)) {
-    done();
-  } else {
+fastify.addHook("preHandler", (request, reply, done) => {
+  if (request.url.startsWith("/api/") && !publicRoutes.includes(request.url)) {
     authMiddleware(request, reply, done);
+  } else {
+    done();
   }
 });
 

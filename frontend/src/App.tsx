@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import { Layout } from '@douyinfe/semi-ui'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
@@ -14,26 +14,41 @@ import Register from './components/Register'
 
 const { Content } = Layout;
 
-function App() {
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
-    <AuthProvider>
-      <Router>
-        <Layout>
-          <Navigation />
-          <Content style={{ padding: '24px' }}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="/users" element={<PrivateRoute><UserManagement api={apiClient} /></PrivateRoute>} />
-              <Route path="/roles" element={<PrivateRoute><RoleManagement api={apiClient} /></PrivateRoute>} />
-              <Route path="/permissions" element={<PrivateRoute><PermissionManagement api={apiClient} /></PrivateRoute>} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </Content>
-        </Layout>
-      </Router>
+    <AuthProvider navigate={navigate}>
+      <Layout>
+        <Navigation />
+        <Content style={{ padding: '24px' }}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              } 
+            />
+            <Route path="/users" element={<PrivateRoute><UserManagement api={apiClient} /></PrivateRoute>} />
+            <Route path="/roles" element={<PrivateRoute><RoleManagement api={apiClient} /></PrivateRoute>} />
+            <Route path="/permissions" element={<PrivateRoute><PermissionManagement api={apiClient} /></PrivateRoute>} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Content>
+      </Layout>
     </AuthProvider>
+  )
+}
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   )
 }
 

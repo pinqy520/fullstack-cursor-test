@@ -11,30 +11,51 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AuthProviderProps {
+  children: React.ReactNode;
+  navigate: (path: string) => void;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }) => {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    const token = localStorage.getItem('token')
+    if (token) {
+      // 验证 token 有效性的逻辑
+      // ...
     }
-  }, [])
+
+    // 监听 authError 事件
+    const handleAuthError = () => {
+      setUser(null)
+      navigate('/login')
+    };
+
+    window.addEventListener('authError', handleAuthError);
+
+    return () => {
+      window.removeEventListener('authError', handleAuthError);
+    };
+  }, [navigate]);
 
   const login = async (email: string, password: string) => {
-    const response: LoginResponse = await apiClient.loginUser({ email, password })
-    setUser(response.user)
-    localStorage.setItem('user', JSON.stringify(response.user))
-    localStorage.setItem('token', response.token)
-    // 可以考虑在这里添加 axios 默认 headers
-    // axios.defaults.headers.common['Authorization'] = `Bearer ${response.token}`;
+    try {
+      const response: LoginResponse = await apiClient.loginUser({ email, password })
+      setUser(response.user)
+      localStorage.setItem('token', response.token)
+      navigate('/dashboard')
+    } catch (error) {
+      console.error('Login failed:', error)
+      throw error
+    }
   }
 
   const logout = async () => {
     await apiClient.logoutUser()
     setUser(null)
-    localStorage.removeItem('user')
     localStorage.removeItem('token')
+    navigate('/login')
   }
 
   const value = {

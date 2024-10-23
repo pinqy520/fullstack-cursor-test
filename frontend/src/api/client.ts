@@ -10,6 +10,7 @@ import type {
   MessageResponse,
   LoginResponse,
 } from "../types/api";
+import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "/api"; // 确保这个URL与你的后端服务器地址匹配
 
@@ -19,15 +20,32 @@ const axiosInstance = axios.create({
 });
 
 // 添加请求拦截器
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+);
+
+// 响应拦截器
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // 清除本地存储的 token
+      localStorage.removeItem("token");
+      // 触发一个自定义事件，通知应用程序登录已失效
+      window.dispatchEvent(new Event("authError"));
+    }
+    return Promise.reject(error);
+  }
+);
 
 const apiClient: API = {
   // User related functions
@@ -43,11 +61,9 @@ const apiClient: API = {
     );
     return response.data;
   },
-  
+
   logoutUser: async () => {
-    const response = await axiosInstance.post<MessageResponse>(
-      `/users/logout`
-    );
+    const response = await axiosInstance.post<MessageResponse>(`/users/logout`);
     return response.data;
   },
 
@@ -126,9 +142,7 @@ const apiClient: API = {
   },
 
   getRole: async (id) => {
-    const response = await axiosInstance.get<RoleWithDetails>(
-      `/roles/${id}`
-    );
+    const response = await axiosInstance.get<RoleWithDetails>(`/roles/${id}`);
     return response.data;
   },
 
@@ -160,10 +174,7 @@ const apiClient: API = {
 
   // Permission related functions
   createPermission: async (data) => {
-    const response = await axiosInstance.post<Permission>(
-      `/permissions`,
-      data
-    );
+    const response = await axiosInstance.post<Permission>(`/permissions`, data);
     return response.data;
   },
 
