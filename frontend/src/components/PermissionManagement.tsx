@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Table, Button, Modal, Form, Toast } from '@douyinfe/semi-ui'
-import { API, Permission, PermissionCreationData } from '../types/api'
+import { Permission, PermissionCreationData } from '../types/api'
+import { useApi } from '../contexts/ApiContext'
 
-interface PermissionManagementProps {
-  api: API
-}
-
-const PermissionManagement: React.FC<PermissionManagementProps> = ({ api }) => {
+const PermissionManagement: React.FC = () => {
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [visible, setVisible] = useState(false)
   const [formApi, setFormApi] = useState<any>(null)
+  const api = useApi()
 
   useEffect(() => {
     fetchPermissions()
@@ -20,7 +18,6 @@ const PermissionManagement: React.FC<PermissionManagementProps> = ({ api }) => {
       const fetchedPermissions = await api.getAllPermissions()
       setPermissions(fetchedPermissions)
     } catch (error) {
-      console.error('Failed to fetch permissions:', error)
       Toast.error('Failed to fetch permissions')
     }
   }

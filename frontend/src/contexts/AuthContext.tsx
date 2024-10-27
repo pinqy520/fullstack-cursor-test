@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
-import apiClient from '../api/client'
 import type { User, LoginResponse } from '../types/api'
+import { useApi } from './ApiContext'
 
 interface AuthContextType {
   user: User | null
@@ -17,18 +17,34 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }) => {
-  const [user, setUser] = useState<User | null>(null)
+  const api = useApi()
+  const [user, setUser] = useState<User | null>(() => {
+    // 从 localStorage 初始化用户状态
+    const savedUser = localStorage.getItem('user')
+    return savedUser ? JSON.parse(savedUser) : null
+  })
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token) {
-      // 验证 token 有效性的逻辑
-      // ...
+    if (token && !user) {
+      // 可以添加验证 token 的 API 调用
+      api.validateToken()
+        .then(response => {
+          setUser(response.user)
+          localStorage.setItem('user', JSON.stringify(response.user))
+        })
+        .catch(() => {
+          // token 无效，清除存储的信息
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          navigate('/login')
+        })
     }
 
-    // 监听 authError 事件
     const handleAuthError = () => {
       setUser(null)
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
       navigate('/login')
     };
 
@@ -37,13 +53,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
     return () => {
       window.removeEventListener('authError', handleAuthError);
     };
-  }, [navigate]);
+  }, [navigate, api, user]);
 
   const login = async (email: string, password: string) => {
     try {
-      const response: LoginResponse = await apiClient.loginUser({ email, password })
+      const response = await api.loginUser({ email, password })
       setUser(response.user)
       localStorage.setItem('token', response.token)
+      localStorage.setItem('user', JSON.stringify(response.user))
       navigate('/dashboard')
     } catch (error) {
       console.error('Login failed:', error)
@@ -52,10 +69,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
   }
 
   const logout = async () => {
-    await apiClient.logoutUser()
-    setUser(null)
-    localStorage.removeItem('token')
-    navigate('/login')
+    try {
+      await api.logoutUser()
+    } finally {
+      setUser(null)
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      navigate('/login')
+    }
   }
 
   const value = {

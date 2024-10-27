@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Modal, Form, Toast, Select } from '@douyinfe/semi-ui'
-import { API, User, RegistrationData, Role } from '../types/api'
+import { Table, Button, Modal, Form, Toast, Select, Tag, ButtonGroup } from '@douyinfe/semi-ui'
+import { User, RegistrationData, Role } from '../types/api'
+import { useApi } from '../contexts/ApiContext'
 
-interface UserManagementProps {
-  api: API;
-}
-
-const UserManagement: React.FC<UserManagementProps> = ({ api }) => {
+const UserManagement: React.FC = () => {
+  const api = useApi()
   const [users, setUsers] = useState<User[]>([])
   const [visible, setVisible] = useState(false)
   const [formApi, setFormApi] = useState<any>(null)
@@ -66,22 +64,32 @@ const UserManagement: React.FC<UserManagementProps> = ({ api }) => {
     { title: 'Name', dataIndex: 'name' },
     { title: 'Email', dataIndex: 'email' },
     {
-      title: 'Actions',
-      dataIndex: 'actions',
-      render: (text: string, record: User) => (
-        <Button onClick={() => handleDeleteUser(record.id)}>Delete</Button>
+      title: 'Roles',
+      dataIndex: 'roles',
+      render: (userRoles: Array<{ roleId: number }>) => (
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          {userRoles.map(userRole => {
+            const role = roles.find(r => r.id === userRole.roleId)
+            return role ? (
+              <Tag key={role.id} color="blue">{role.name}</Tag>
+            ) : (
+              <Tag key={userRole.roleId} color="grey">Unknown Role</Tag>
+            )
+          })}
+          {userRoles.length === 0 && <Tag color="grey">No roles</Tag>}
+        </div>
       ),
     },
     {
-      title: 'Roles',
-      dataIndex: 'roles',
-      render: (roles: Array<{ roleId: number }>, record: User) => (
-        <>
-          {roles.map(role => role.roleId).join(', ')}
+      title: 'Actions',
+      dataIndex: 'actions',
+      render: (text: string, record: User) => (
+        <ButtonGroup>
           <Button onClick={() => { setSelectedUser(record); setRoleModalVisible(true); }}>
             Manage Roles
           </Button>
-        </>
+          <Button type="danger" onClick={() => handleDeleteUser(record.id)}>Delete</Button>
+        </ButtonGroup>
       ),
     },
   ]

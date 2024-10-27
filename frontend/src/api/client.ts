@@ -204,6 +204,11 @@ const apiClient: API = {
     );
     return response.data;
   },
+
+  validateToken: async () => {
+    const response = await axiosInstance.get<{ user: User }>('/users/validate-token');
+    return response.data;
+  },
 };
 
 export default apiClient;

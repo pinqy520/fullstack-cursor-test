@@ -1,7 +1,7 @@
 import React from 'react'
 import { Layout, Nav, Button, Avatar } from '@douyinfe/semi-ui'
 import { IconUser, IconUserGroup, IconKey, IconSetting } from '@douyinfe/semi-icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import type { OnSelectedData } from '@douyinfe/semi-ui/lib/es/navigation'
 
@@ -9,6 +9,7 @@ const { Sider } = Layout
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, logout } = useAuth()
 
   const handleSelect = (data: OnSelectedData) => {
@@ -20,11 +21,14 @@ const Navigation: React.FC = () => {
     navigate('/login')
   }
 
+  // Get current path without leading slash
+  const currentPath = location.pathname.substring(1) || 'dashboard'
+
   return (
     <Sider style={{ height: '100vh' }}>
       <Nav
         style={{ height: '100%' }}
-        defaultSelectedKeys={['dashboard']}
+        selectedKeys={[currentPath]}
         items={[
           { itemKey: 'dashboard', text: 'Dashboard', icon: <IconSetting /> },
           { itemKey: 'users', text: 'Users', icon: <IconUser /> },

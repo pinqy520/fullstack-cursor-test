@@ -49,6 +49,9 @@ export interface ProfileUpdateData {
 export interface Role {
   id: number;
   name: string;
+  description: string;
+  parentRole?: Role;
+  permissions?: Permission[];
 }
 
 export interface RoleWithDetails extends Role {
@@ -123,4 +126,5 @@ export interface API {
   getPermission: (id: number) => Promise<PermissionWithRoles>;
   updatePermission: (id: number, data: { name: string }) => Promise<Permission>;
   deletePermission: (id: number) => Promise<MessageResponse>;
+  validateToken: () => Promise<{ user: User }>;
 }

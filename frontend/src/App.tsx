@@ -11,6 +11,7 @@ import apiClient from './api/client'
 import { AuthProvider } from './contexts/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import Register from './components/Register'
+import { ApiProvider } from './contexts/ApiContext'
 
 const { Content } = Layout;
 
@@ -18,29 +19,31 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <AuthProvider navigate={navigate}>
-      <Layout>
-        <Navigation />
-        <Content style={{ padding: '24px' }}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              } 
-            />
-            <Route path="/users" element={<PrivateRoute><UserManagement api={apiClient} /></PrivateRoute>} />
-            <Route path="/roles" element={<PrivateRoute><RoleManagement api={apiClient} /></PrivateRoute>} />
-            <Route path="/permissions" element={<PrivateRoute><PermissionManagement api={apiClient} /></PrivateRoute>} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Content>
-      </Layout>
-    </AuthProvider>
+    <ApiProvider>
+      <AuthProvider navigate={navigate}>
+        <Layout>
+          <Navigation />
+          <Content style={{ padding: '24px' }}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                } 
+              />
+              <Route path="/users" element={<PrivateRoute><UserManagement /></PrivateRoute>} />
+              <Route path="/roles" element={<PrivateRoute><RoleManagement /></PrivateRoute>} />
+              <Route path="/permissions" element={<PrivateRoute><PermissionManagement /></PrivateRoute>} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Content>
+        </Layout>
+      </AuthProvider>
+    </ApiProvider>
   )
 }
 
