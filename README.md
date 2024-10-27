@@ -39,13 +39,14 @@
     - `PermissionManagement.tsx`: 权限管理页面组件。
     - `Navigation.tsx`: 导航栏组件。
     - `PrivateRoute.tsx`: 用于保护需要认证的路由。
-  - `contexts/`
+  - `contexts/`: 包含 React Context 相关文件。
     - `AuthContext.tsx`: 提供认证相关的上下文。
+    - `ApiContext.tsx`: 提供 API 客户端的上下文。
   - `api/`
     - `client.ts`: API 客户端，封装了与后端的通信逻辑。
   - `types/`
     - `api.ts`: 定义了 API 相关的类型和接口。
-- `vite.config.ts`: Vite 配置文件，包含开发服务器和构建选项。
+- `vite.config.ts`: Vite 配置文件。
 - `index.html`: HTML 入口文件。
 
 ### 后端 (backend/)
@@ -73,15 +74,20 @@
 
 ## 主要功能
 
-- 用户认证：注册、登录、注销
-- 用户管理：查看用户列表、创建新用户、删除用户
-- 角色管理：查看角色列表、创建新角色、删除角色
+- 用户认证：注册、登录、注销，包括持久化的登录状态
+- 用户管理：查看用户列表、创建新用户、删除用户、管理用户角色
+- 角色管理：查看角色列表、创建新角色、编辑角色（包括权限分配）、删除角色
 - 权限管理：查看权限列表、创建新权限、删除权限
 - 路由保护：使用 PrivateRoute 组件保护需要认证的路由
 
 ## 认证机制
 
-项目使用基于 token 的认证机制。AuthContext 提供了全局的认证状态管理，包括用户登录、注销功能。PrivateRoute 组件用于保护需要认证的路由，未登录用户会被重定向到登录页面。
+项目使用基于 token 的认证机制：
+- 登录成功后将 token 和用户信息存储在 localStorage
+- AuthContext 提供了全局的认证状态管理
+- ApiContext 提供了统一的 API 访问方式
+- 自动处理 token 失效的情况
+- 支持页面刷新后保持登录状态
 
 ## 开发指南
 
